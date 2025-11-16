@@ -8,11 +8,13 @@ class LLMService:
             api_key=settings.OPENROUTER_API_KEY,
         )
         self.model = settings.LLM_MODEL
+        self.system_prompt = {"role": "system", "content": settings.LLM_SYSTEM_PROMPT}
 
-    async def get_completion(self, prompt: str) -> str:
-        messages = [
-            {"role": "user", "content": prompt}
-        ]
+    async def get_completion(self, user_message_content: str, chat_history: list[dict]) -> str:
+        messages = [self.system_prompt]
+        messages.extend(chat_history[-settings.CHAT_HISTORY_LENGTH:])
+        messages.append({"role": "user", "content": user_message_content})
+
         chat_completion = await self.client.chat.completions.create(
             model=self.model,
             messages=messages,
